@@ -91,6 +91,9 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          
+          double delta = j[1]["steering_angle"];
+          double throttle = j[1]["throttle"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -100,7 +103,54 @@ int main() {
           */
           double steer_value;
           double throttle_value;
+          
+          // global to car coordinate system
+          Eigen::VectorXd x(ptsx.size());
+          Eigen::VectorXd y(ptsy.size());
+          
+          for (int i = 0; i < ptsx.size(); i++) {
+            auto xDiff = ptsx[i] - px;
+            auto yDiff = ptsy[i] - py;
+            x[i] = xDiff * cos(psi) + yDiff * sin(psi);
+            y[i] = -xDiff * sin(psi) + yDiff * cos(psi);
+          }
 
+          auto coeffs = polyfit(x, y, 3);
+          auto cte = polyeval(coeffs, 0);
+          auto epsi = -atan(coeffs[1]);
+
+          double latency = 0.1;
+          double lf = 2.67;
+          px += v * cos(psi) * latency;
+          py += v * sin(psi) * latency;
+          psi += v * delta / lf * latency;
+          v += throttle * latency;
+          
+          
+          Eigen::VectorXd state(6);
+          state << px, py, psi, v, cte, epsi;
+          
+          auto vars = mpc.Solve(state, coeffs);
+          
+          auto x_val = vars[0];
+          auto y_val = vars[1];
+          auto psi_val = vars[2];
+          auto v_val = vars[3];
+          auto cte_val = vars[4];
+          auto epsi_val = vars[5];
+          auto delta_val = vars[6];
+          auto a_val = vars[7];
+          
+          cout << "-----------------\n";
+          cout << "x:" << x_val << "\n";
+          cout << "y:" << y_val << "\n";
+          cout << "psi:" << psi_val << "\n";
+          cout << "v:" << v_val << "\n";
+          cout << "cte:" << cte_val << "\n";
+          cout << "epsi:" << epsi_val << "\n";
+          cout << "delta:" << delta_val << "\n";
+          cout << "a:" << a_val << "\n";
+          
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
@@ -113,13 +163,17 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-
+          
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
 
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
+          for (int i = 0; i < x.size(); i++) {
+            next_x_vals.push_back(x[i]);
+            next_y_vals.push_back(y[i]);
+          }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
