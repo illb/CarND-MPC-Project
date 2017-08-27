@@ -31,3 +31,13 @@
 ## Model Predictive Control with Latency
 
 * I used 100 millisecond latency.
+* Since there is an interval of 100ms, 100ms was reflected in advance and sent to Solve function.
+
+```
+double latency = 0.1;
+px += v * cos(psi) * latency;
+py += v * sin(psi) * latency;
+psi += v * -delta / lf * latency;
+v += throttle * latency;
+```
+
