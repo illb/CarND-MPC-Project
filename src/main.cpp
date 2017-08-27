@@ -126,8 +126,8 @@ int main() {
           auto cte = polyeval(coeffs, 0);
           auto epsi = -atan(coeffs[1]);
           
-          Eigen::VectorXd state(8);
-          state << 0.0, 0.0, 0.0, v, cte, epsi, -delta, throttle;
+          Eigen::VectorXd state(6);
+          state << 0.0, 0.0, 0.0, v, cte, epsi;
           
           auto vars = mpc.Solve(state, coeffs);
           
