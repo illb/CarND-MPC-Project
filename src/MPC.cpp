@@ -257,7 +257,7 @@ vector<double> MPC::Solve(Eigen::VectorXd x0, Eigen::VectorXd coeffs) {
   vector<double> result = {solution.x[x_start + 1], solution.x[y_start + 1],
     solution.x[psi_start + 1], solution.x[v_start + 1],
     solution.x[cte_start + 1], solution.x[epsi_start + 1],
-    solution.x[delta_start + 1] , solution.x[a_start + 1],};
+    solution.x[delta_start + 1] / Lf, solution.x[a_start + 1],};
   
   for (int i=0; i<N; i++) {
     result.push_back(solution.x[x_start + i]);
